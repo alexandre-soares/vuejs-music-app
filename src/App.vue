@@ -56,10 +56,11 @@ body {
 
 .player-card {
   width: 30rem;
-  height: 75vh;
+  height: 80vh;
   border-radius: 3rem;
   background-color: #e3e3ed;
   margin: 5rem;
-  padding: 4rem;
+  padding: 2rem 2rem;
+  box-shadow: 0 0 0.5rem 0.5rem rgba(0, 0, 0, 0.1);
 }
 </style>
