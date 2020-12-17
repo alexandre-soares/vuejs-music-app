@@ -5,14 +5,14 @@
 
       <section class="player">
         <div class="cover-wrapper">
-          <img :src="current.cover" />
+          <img v-bind:class="coverObject" :src="current.cover" />
         </div>
 
         <div class="song-details">
           <h2 class="song-title">
             {{ current.title }}
           </h2>
-          <p class="artist">{{ current.artist }}</p>
+          <p class="song-artist">{{ current.artist }}</p>
         </div>
         <!-- <KProgress
           :show-text="false"
@@ -21,25 +21,24 @@
           :color="['#df83f1', '#82279f', '#53cfe0']"
         /> -->
 
-        <!-- <div class="timer">
-            <p class="start">{{ currentlyTimer }}</p>
-            <p class="end">
-              {{ current.totalTimer }}
-            </p>
-          </div>
-        </div> -->
+        <div class="timer">
+          <p class="start">{{ currentlyTimer }}</p>
+          <p class="end">
+            {{ current.totalTimer }}
+          </p>
+        </div>
 
         <div class="controls">
-          <button class="prev">
+          <button class="prev" @click="prev">
             <i class="fas fa-step-backward"></i>
           </button>
-          <button class="play">
+          <button class="play" v-if="!isPlaying" @click="play">
             <i class="fas fa-play-circle"></i>
           </button>
-          <button class="pause" @click="pause">
+          <button class="pause" v-else @click="pause">
             <i class="fas fa-pause-circle"></i>
           </button>
-          <button class="next">
+          <button class="next" @click="next">
             <i class="fas fa-step-forward"></i>
           </button>
         </div>
@@ -57,7 +56,7 @@
           v-for="song in songs"
           :key="song.src"
           class="song-item"
-          @click="playSong(song)"
+          @click="play(song)"
         >
           <div class="cover-playlist">
             <img class="cover" :src="song.cover" />
@@ -84,11 +83,21 @@
         </li>
       </ul>
     </div>
+
+    <div class="footer">
+      <p>
+        I do not own the design or the music. For the design, check here :
+        <a href="https://dribbble.com/shots/14762728-Music-Player-App"
+          >https://dribbble.com/shots/14762728-Music-Player-App</a
+        >
+      </p>
+    </div>
   </div>
 </template>
 
 <script>
 import songs from "./songs/songs";
+import { formatTimer } from "./utils/utils";
 export default {
   name: "App",
   data() {
@@ -103,7 +112,32 @@ export default {
     };
   },
   methods: {
-    playSong(song) {
+    listenersWhenPlay() {
+      this.player.addEventListener("timeupdate", () => {
+        var playerTimer = this.player.currentTime;
+        this.currentlyTimer = formatTimer(playerTimer);
+        this.current.percent = (playerTimer * 100) / this.current.seconds;
+        this.current.isPlaying = true;
+      });
+      this.player.addEventListener(
+        "ended",
+        function() {
+          this.next();
+        }.bind(this)
+      );
+    },
+    setCover() {
+      this.coverObject.animated = true;
+      setTimeout(() => {
+        this.coverObject.animated = false;
+      }, 1000);
+    },
+    setCurrentSong() {
+      this.current = this.songs[this.index];
+      this.play(this.current);
+      this.setCover();
+    },
+    play(song) {
       if (typeof song.src !== "undefined") {
         this.current.isPlaying = false;
         this.index = this.songs.indexOf(this.current);
@@ -112,14 +146,34 @@ export default {
       }
       this.player.play();
       this.isPlaying = true;
+
+      this.listenersWhenPlay();
     },
     pause() {
       this.player.pause();
       this.isPlaying = false;
+    },
+    next() {
+      this.current.isPlaying = false;
+      this.index = this.songs.indexOf(this.current);
+      this.index++;
+      if (this.index > this.songs.length - 1) {
+        this.index = 0;
+      }
+      this.setCurrentSong();
+    },
+    prev() {
+      this.current.isPlaying = false;
+      this.index = this.songs.indexOf(this.current);
+      this.index--;
+      if (this.index < 0) {
+        this.index = this.songs.length - 1;
+      }
+      this.setCurrentSong();
     }
   },
   mounted() {
-    this.current = this.songs[0];
+    this.current = this.songs[this.index];
     this.player.src = this.current.src;
   }
 };
@@ -161,6 +215,7 @@ body {
 button {
   border: none;
   background-color: transparent;
+  transition: 1s ease;
 }
 
 button:focus {
@@ -264,9 +319,26 @@ button:focus {
   border: none;
   color: #e1e6f2;
   background-color: #ffffff;
+  transition: 1s ease;
 }
 
-.fas.fa-play-circle {
+button:hover .fas {
+  color: white;
+  background: #f12711; /* fallback for old browsers */
+  background: -webkit-linear-gradient(
+    to top,
+    #f5af19,
+    #f12711
+  ); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(
+    to top,
+    #f5af19,
+    #f12711
+  ); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+}
+
+.fas.fa-play-circle,
+.fa-pause-circle {
   color: white;
   background: #f12711; /* fallback for old browsers */
   background: -webkit-linear-gradient(
@@ -291,10 +363,9 @@ button:focus {
   margin: 2rem 2rem 10rem !important;
   position: relative;
 }
-
 .cover-wrapper {
   text-align: center;
-  margin: 4rem auto;
+  margin: 4rem auto 2rem;
 }
 
 .cover-wrapper img {
@@ -305,6 +376,20 @@ button:focus {
   box-shadow: -1px 17px 24px -6px rgba(0, 0, 0, 0.2);
 }
 
+.player-music .song-details {
+  text-align: center;
+}
+
+.player-music .song-title {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.player-music .song-artist {
+  font-size: 1.2rem;
+  margin-bottom: 3rem;
+}
+
 .controls {
   text-align: center;
   display: flex;
@@ -312,7 +397,8 @@ button:focus {
   justify-content: center;
 }
 
-.play .fas.fas.fa-play-circle {
+.play .fas.fas.fa-play-circle,
+.fa-pause-circle {
   height: 6rem;
   width: 6rem;
   font-size: 4rem;
