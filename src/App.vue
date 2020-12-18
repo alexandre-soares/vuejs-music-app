@@ -88,8 +88,8 @@
 
         <div class="footer">
             <p>
-                I do not own the design or the music. <br />
-                For the design, check here :
+                I do not own the design or the musics. <br />
+                For the design, all the credits go to :
                 <a href="https://dribbble.com/shots/14762728-Music-Player-App"
                     >https://dribbble.com/shots/14762728-Music-Player-App</a
                 >
@@ -121,6 +121,7 @@ export default {
     },
     methods: {
         listenersWhenPlay() {
+            this.current.totalTimer = formatTimer(this.current.seconds)
             this.player.addEventListener('timeupdate', () => {
                 var playerTimer = this.player.currentTime
                 this.currentlyTimer = formatTimer(playerTimer)
@@ -184,6 +185,7 @@ export default {
     mounted() {
         this.current = this.songs[this.index]
         this.player.src = this.current.src
+        this.totalTimer = this.current.totalTimer
     }
 }
 </script>
@@ -419,6 +421,11 @@ button:hover .fas {
 
 .k-progress-outer {
     padding-right: 0;
+}
+
+.timer {
+    display: flex;
+    justify-content: space-between;
 }
 
 .footer {
